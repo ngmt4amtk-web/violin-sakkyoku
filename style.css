@@ -5,3 +5,5 @@
 #dock .input-grid{max-width:656px;margin:0 auto;grid-template-columns:repeat(5,1fr)}
 #dock-play{min-width:0;font-size:18px}
 .clear-all-btn{font-size:12px;min-height:36px;padding:4px 12px;margin-top:4px}
+button,select,input{touch-action:manipulation}
+#bars,select{font-size:16px}
