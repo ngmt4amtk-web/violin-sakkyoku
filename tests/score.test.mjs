@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {renderScore} from '../score.mjs';
+const shapes={A:[2,4,5,7],E:[1,3,5,7],G:[2,4,5,7],D:[2,4,5,7]};
+const note=(string,finger)=>({string,finger});
+let s=renderScore([0,1,2,3].map(x=>note('A',x)),shapes,'A',[],{root:9,type:'major'});
+assert.equal((s.match(/class="notehead"/g)||[]).length,4);
+assert.deepEqual([...s.matchAll(/class="finger"[^>]*>(\d)</g)].map(m=>m[1]),['0','1','2','3']);
+assert.equal((s.match(/くっつく/g)||[]).length,1);assert.equal((s.match(/class="accidental"/g)||[]).length,0);assert.equal((s.match(/class="key-signature"/g)||[]).length,3);
+s=renderScore([null,null,null,note('A',1),'ー',null,null,null],shapes,'A',[],{root:9,type:'major'});assert.equal((s.match(/class="tie"/g)||[]).length,1);assert.equal((s.match(/class="finger"/g)||[]).length,1);
+s=renderScore([note('E',1),null,null,null],shapes,'E',[],{root:0,type:'major'});assert.ok(s.includes('ひくく'));assert.ok(!s.includes('>♯<'));
+s=renderScore([null,'休',null,null],shapes,'A',[],{root:0,type:'major'});assert.ok(s.includes('whole-rest'));
+assert.match(s,/<path class="rest whole-rest"/);assert.ok(!s.includes('𝄽')&&!s.includes('𝄞'));
+s=renderScore(Array(16).fill(null),shapes,'A',[],{root:0,type:'major'},90,390);assert.equal((s.match(/class="clef"/g)||[]).length,2);
+console.log('score tests passed');
