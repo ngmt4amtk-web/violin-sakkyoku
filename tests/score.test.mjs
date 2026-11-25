@@ -11,4 +11,5 @@ s=renderScore([note('E',1),null,null,null],shapes,'E',[],{root:0,type:'major'});
 s=renderScore([null,'休',null,null],shapes,'A',[],{root:0,type:'major'});assert.ok(s.includes('whole-rest'));
 assert.match(s,/<path class="rest whole-rest"/);assert.ok(!s.includes('𝄽')&&!s.includes('𝄞'));
 s=renderScore(Array(16).fill(null),shapes,'A',[],{root:0,type:'major'},90,390);assert.equal((s.match(/class="clef"/g)||[]).length,2);
+s=renderScore(Array.from({length:16},(_,i)=>i===7?note('A',2):i===8?note('A',3):null),shapes,'A',[],{root:9,type:'major'},90,390);assert.equal((s.match(/くっつく/g)||[]).length,1);
 console.log('score tests passed');
