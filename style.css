@@ -28,3 +28,4 @@
 #grid{grid-template-columns:8px repeat(8,minmax(0,1fr))}
 @media(max-width:380px){#grid{grid-template-columns:8px repeat(8,minmax(0,1fr))}}
 .string-bar{display:block;width:6px;height:100%;border-radius:3px;opacity:.55}
+.grid-cell:not(.block):not(.rest-column){background:#fff;box-shadow:inset 0 0 0 1.5px var(--tone-border,#e5dfed)}

@@ -25,6 +25,9 @@ async function check(page, name) {
 async function noNamesOnGrid(page, name) {
   const texts = await page.locator('#grid .grid-label, #grid .grid-cell').evaluateAll(els => els.map(el => el.innerText.trim()).filter(t => t && t !== '🌙'));
   assert.deepEqual(texts, [], `${name}: メロディのマスと行に指番号や音の字があります: ${texts.slice(0,10)}`);
+  assert.equal(await page.locator('#grid .chord-tone').count(), 0, `${name}: 白マスと色マスの区別が残っている`);
+  const empty = await page.locator('#grid .grid-cell:not(.block):not(.rest-column)').evaluateAll(els => [...new Set(els.map(el => getComputedStyle(el).backgroundColor))]);
+  assert.deepEqual(empty, ['rgb(255, 255, 255)'], `${name}: 置いていないマスは全部白: ${empty}`);
   const desc = await page.locator('#melody-description').innerText();
   assert.ok(!/指番号|たては指/.test(desc), `${name}: 説明文に指番号: ${desc}`);
 }
@@ -41,6 +44,8 @@ try {
     await check(page,'accomp');
     await next(page);
     await check(page,'melody');
+    assert.equal(await page.locator('#grid .grid-cell.block').count(), 0, '初めて開いたメロディは空白');
+    await noNamesOnGrid(page,'key-melody-empty');
     // Place one note per string in consecutive beats, using the accessible cell labels.
     for (const [i, string] of ['G','D','A','E'].entries()) {
       const cells = page.locator('.grid-cell');
