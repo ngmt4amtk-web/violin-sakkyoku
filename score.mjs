@@ -1,5 +1,5 @@
 import {GLYPHS} from './glyphs.mjs';
-import {midi} from './music.mjs?v=4';
+import {midi} from './music.mjs?v=5';
 const mod=n=>(n%12+12)%12;
 const colors={G:'#1F5FD1',D:'#EE8A00',A:'#CC1030',E:'#138A3A'};
 const keys={0:[0,''],7:[1,'#'],2:[2,'#'],9:[3,'#'],4:[4,'#'],11:[5,'#'],6:[6,'#'],5:[1,'b'],10:[2,'b'],3:[3,'b'],8:[4,'b'],1:[5,'b']};

@@ -25,3 +25,6 @@
 .grid-cell.block.end:not(.start){border-radius:0 10px 10px 0}
 .grid-cell.block.start.end{border-radius:10px}
 .grid-cell.rest-column,.grid-cell.rest-column.chord-tone:not(.block){background:#EFEAF7;box-shadow:none}
+#grid{grid-template-columns:8px repeat(8,minmax(0,1fr))}
+@media(max-width:380px){#grid{grid-template-columns:8px repeat(8,minmax(0,1fr))}}
+.string-bar{display:block;width:6px;height:100%;border-radius:3px;opacity:.55}

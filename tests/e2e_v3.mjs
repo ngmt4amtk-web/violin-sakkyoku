@@ -4,13 +4,14 @@ import fs from 'node:fs/promises';
 
 const url = process.argv[2];
 if (!url) throw new Error('使い方: node tests/e2e_v3.mjs http://localhost:8000/');
-const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261127-2257-2a2f/work/v3shots4';
+const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261128-0836-59f3/work/shots';
 await fs.mkdir(shots, {recursive:true});
 const browser = await chromium.launch({channel:'chrome', headless:true});
 const errors = [];
 async function newPage(seed = {}) {
   const context = await browser.newContext({viewport:{width:390,height:844}, deviceScaleFactor:1});
   await context.addInitScript(data => { if (!sessionStorage.getItem('e2e-seeded')) { localStorage.clear(); for (const [k,v] of Object.entries(data)) localStorage.setItem(k, JSON.stringify(v)); sessionStorage.setItem('e2e-seeded','1'); } }, seed);
+  await context.addInitScript(() => { window.__osc = []; const start = OscillatorNode.prototype.start; OscillatorNode.prototype.start = function(t) { window.__osc.push({type:this.type, f:this.frequency.value, t:t ?? 0}); return start.apply(this, arguments); }; });
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(error.stack || String(error)));
   await page.goto(url, {waitUntil:'networkidle'});
@@ -20,6 +21,12 @@ async function check(page, name) {
   const dimensions = await page.evaluate(() => ({width:document.documentElement.scrollWidth, viewport:innerWidth}));
   assert.ok(dimensions.width <= 390, `${name}: 横幅 ${dimensions.width}px`);
   await page.screenshot({path:`${shots}/${name}.png`, fullPage:true});
+}
+async function noNamesOnGrid(page, name) {
+  const texts = await page.locator('#grid .grid-label, #grid .grid-cell').evaluateAll(els => els.map(el => el.innerText.trim()).filter(t => t && t !== '🌙'));
+  assert.deepEqual(texts, [], `${name}: メロディのマスと行に指番号や音の字があります: ${texts.slice(0,10)}`);
+  const desc = await page.locator('#melody-description').innerText();
+  assert.ok(!/指番号|たては指/.test(desc), `${name}: 説明文に指番号: ${desc}`);
 }
 const clickText = (page, text) => page.getByRole('button', {name:text, exact:false}).first().click();
 const next = page => clickText(page, 'つぎへ');
@@ -43,6 +50,7 @@ try {
       assert.ok(pick, `${string}線の拍がありません`);
       await cells.nth(pick.index).click();
     }
+    await noNamesOnGrid(page,'key-melody');
     const placed = await page.evaluate(() => JSON.parse(localStorage.getItem('violin-sakkyoku-v3')).melody.filter(x=>x && typeof x==='object'));
     assert.deepEqual(new Set(placed.map(x=>x.string)), new Set(['G','D','A','E']));
     await page.locator('#steps button').nth(0).click();
@@ -65,6 +73,29 @@ try {
     assert.equal(signature,4,'2段の各段に♯が2個');
     const colors = await page.locator('#score .finger').evaluateAll(els=>els.map(el=>el.style.fill.toLowerCase()));
     for (const color of ['rgb(31, 95, 209)','rgb(238, 138, 0)','rgb(204, 16, 48)','rgb(19, 138, 58)']) assert.ok(colors.includes(color),`楽譜に ${color} がありません: ${colors}`);
+    // カウントインのあと、メトロノームつきで伴奏だけ（再生ボタンの下）
+    const below = await page.evaluate(() => { const p = document.querySelector('#play').getBoundingClientRect(), m = document.querySelector('#play-metronome').getBoundingClientRect(); return m.top >= p.bottom - 1; });
+    assert.ok(below, 'メトロノームの操作が再生の下にある');
+    await page.evaluate(() => { window.__osc = []; });
+    await page.locator('#play-metronome').click();
+    await page.waitForTimeout(150);
+    assert.match(await page.locator('#play-metronome').innerText(), /🥁 [1-4]/, 'カウント中の表示');
+    const bpm = await page.evaluate(() => JSON.parse(localStorage.getItem('violin-sakkyoku-v3')).tempo);
+    await page.waitForTimeout(Math.ceil(60000 / bpm * 6));
+    assert.equal(await page.locator('#play-metronome').innerText(), '■ 止める', 'カウントのあとは止めるボタン');
+    const osc = await page.evaluate(() => window.__osc);
+    const clicks = osc.filter(o => o.type === 'square'), saws = osc.filter(o => o.type === 'sawtooth'), vib = osc.filter(o => o.type === 'sine' && Math.abs(o.f - 5.5) < .01);
+    assert.ok(clicks.length >= 6, `メトロノームの音 ${clicks.length}`);
+    const firstSaw = Math.min(...saws.map(o => o.t));
+    const countIn = clicks.filter(o => o.t < firstSaw - 1e-3);
+    assert.equal(countIn.length, 4, `伴奏の前のカウントは4つ: ${countIn.length}`);
+    assert.equal(countIn[0].f, 1760, '1つ目のカウントは高い音');
+    assert.ok(clicks.some(o => o.t >= firstSaw - 1e-3), '伴奏の間もメトロノームが鳴る');
+    assert.ok(saws.length > 0, '伴奏が鳴る');
+    assert.equal(vib.length, 0, 'メロディは鳴らない');
+    await page.locator('#play-metronome').click();
+    assert.equal(await page.locator('#play-metronome').innerText(), '🥁 メトロノームと伴奏だけ', '止めると元の表示');
+    await page.screenshot({path:`${shots}/done-metronome.png`, fullPage:true});
     await page.reload({waitUntil:'networkidle'});
     const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('violin-sakkyoku-v3')).melody.filter(x=>x && typeof x==='object'));
     assert.deepEqual(restored, placed, '再読み込み後の音');
@@ -79,6 +110,7 @@ try {
     await next(page); await check(page,'finger-accomp');
     await next(page); await check(page,'finger-melody');
     await page.locator('.grid-cell').first().click();
+    await noNamesOnGrid(page,'finger-melody');
     await next(page); await check(page,'finger-done');
     assert.ok(await page.locator('#score .finger').count()>0,'指の道の楽譜');
     await context.close();
