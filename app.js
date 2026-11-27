@@ -1,6 +1,6 @@
 import {renderScore} from './score.mjs';
-import {STRINGS,PRESETS,midi,findKeys,resolveKey,noteName,chords,PROGRESSIONS,progression,harmonize,soundingNotes,voice,makeMelody,KEYS,keyShapes,keyRows,keyScaleRows,makeKeyMelody} from './music.mjs?v=3';
-import {AudioEngine} from './audio.mjs?v=3';
+import {STRINGS,PRESETS,midi,findKeys,resolveKey,noteName,chords,PROGRESSIONS,progression,harmonize,soundingNotes,voice,makeMelody,KEYS,keyShapes,keyRows,keyScaleRows,makeKeyMelody} from './music.mjs?v=4';
+import {AudioEngine} from './audio.mjs?v=4';
 const $=s=>document.querySelector(s), audio=new AudioEngine(), storage='violin-sakkyoku-v3';
 const defaults={route:'key',keyId:'C',title:'',rest:false,string:'A',shapes:Object.fromEntries(Object.keys(STRINGS).map(s=>[s,[...PRESETS['23']]])),ending:0,bars:4,melody:Array(16).fill(null),mode:'melody',progression:'基本',style:'ポップ風',tempo:90,loop:false,page:0,noteLen:1,view:0};
 let randomSequence=null, printing=false;
