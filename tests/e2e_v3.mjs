@@ -100,6 +100,18 @@ try {
     assert.equal(vib.length, 0, 'メロディは鳴らない');
     await page.locator('#play-metronome').click();
     assert.equal(await page.locator('#play-metronome').innerText(), '🥁 メトロノームと伴奏だけ', '止めると元の表示');
+    await page.waitForTimeout(100);
+    const stoppedAt = await page.evaluate(() => window.__osc.length);
+    await page.waitForTimeout(800);
+    assert.equal(await page.evaluate(() => window.__osc.length), stoppedAt, '止めたあとは音が増えない');
+    await page.locator('#play-metronome').click();
+    await page.waitForTimeout(200);
+    await clickText(page, 'メロディにもどって直す');
+    await page.waitForTimeout(100);
+    const leftAt = await page.evaluate(() => window.__osc.length);
+    await page.waitForTimeout(800);
+    assert.equal(await page.evaluate(() => window.__osc.length), leftAt, '画面を移るとメトロノームが止まる');
+    await next(page);
     await page.screenshot({path:`${shots}/done-metronome.png`, fullPage:true});
     await page.reload({waitUntil:'networkidle'});
     const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('violin-sakkyoku-v3')).melody.filter(x=>x && typeof x==='object'));
@@ -114,6 +126,8 @@ try {
     await next(page); await check(page,'finger-shape');
     await next(page); await check(page,'finger-accomp');
     await next(page); await check(page,'finger-melody');
+    assert.equal(await page.locator('#grid .grid-cell.block').count(), 0, '指の道も初めは空白');
+    await noNamesOnGrid(page,'finger-melody-empty');
     await page.locator('.grid-cell').first().click();
     await noNamesOnGrid(page,'finger-melody');
     await next(page); await check(page,'finger-done');
