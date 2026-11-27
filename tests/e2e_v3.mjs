@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 const url = process.argv[2];
 if (!url) throw new Error('使い方: node tests/e2e_v3.mjs http://localhost:8000/');
-const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261127-2257-2a2f/work/v3shots3';
+const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261127-2257-2a2f/work/v3shots4';
 await fs.mkdir(shots, {recursive:true});
 const browser = await chromium.launch({channel:'chrome', headless:true});
 const errors = [];
@@ -89,7 +89,7 @@ try {
     await next(page); await next(page);
     await clickText(page,'休み');
     await page.locator('.grid-cell').first().click();
-    assert.equal(await page.locator('.grid-cell.rest-column').count(), await page.locator('.grid-label').count(), '休みの列を灰色にする');
+    assert.equal(await page.locator('.grid-cell.rest-column').count(), await page.locator('.grid-label').count(), '休みの列を表示する');
     assert.equal(await page.locator('.grid-cell.rest-column').first().innerText(), '🌙');
     await next(page);
     assert.ok(await page.locator('#score .rest').count()>0, '楽譜に休符');

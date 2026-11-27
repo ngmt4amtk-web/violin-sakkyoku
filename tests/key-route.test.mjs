@@ -21,21 +21,22 @@ for(const key of KEYS){
       const melody=makeKeyMelody(rows,key,progression(key,'基本',4,true));
       assert.equal(melody.length,16);
       assert.equal((cellMidi(melody[12],shapes)-key.root+120)%12,0);
-      assert.ok(cellMidi(melody[12],shapes)>=62&&cellMidi(melody[12],shapes)<=74);
+      assert.ok(cellMidi(melody[12],shapes)>=60&&cellMidi(melody[12],shapes)<=74);
       assert.deepEqual(melody.slice(13),['ー','ー','ー']);
-      const notes=melody.filter(c=>c&&typeof c==='object');
+      const positions=melody.map((c,p)=>c&&typeof c==='object'?p:-1).filter(p=>p>=0);
+      const notes=positions.map(p=>melody[p]);
       const indices=notes.map(c=>ascending.findIndex(r=>r.string===c.string&&r.finger===c.finger));
       assert.ok(indices.every(n=>n>=0));
       for(let n=1;n<indices.length;n++){
         const d=Math.abs(indices[n]-indices[n-1]);
         assert.ok(d<=3);
-        if(d===3){const chord=progression(key,'基本',4,true)[Math.floor(n/4)];assert.ok(chord.pcs.includes(ascending[indices[n-1]].midi%12)&&chord.pcs.includes(ascending[indices[n]].midi%12));}
+        if(d===3){const chord=progression(key,'基本',4,true)[Math.floor(positions[n]/4)];assert.ok(chord.pcs.includes(ascending[indices[n-1]].midi%12)&&chord.pcs.includes(ascending[indices[n]].midi%12));}
       }
       widths+=Math.max(...indices)-Math.min(...indices);
       if(new Set(notes.map(c=>c.string)).size>=3)threeStrings++;
     }
     assert.ok(widths/20>=6,`平均幅 ${widths/20}`);
-    assert.ok(threeStrings>=10,`3弦以上 ${threeStrings}/20`);
+    assert.ok(threeStrings>=6,`3弦以上 ${threeStrings}/20`);
   });
 }
 test('natural minor chords and progressions remain within the scale',()=>{

@@ -72,29 +72,40 @@ export function keyScaleRows(rows,key){
   return ascending.filter(row=>row.midi>=tonic.midi&&row.midi<=tonic.midi+12);
 }
 export function makeKeyMelody(rows,key,barChords){
-  const ascending=[...rows].sort((a,b)=>a.midi-b.midi);
-  if(!ascending.length)return [];
-  const tonics=ascending.map((r,i)=>({r,i})).filter(({r})=>r.midi>=62&&r.midi<=74&&mod(r.midi-key.root)===0);
-  const tonic=tonics[Math.floor(Math.random()*tonics.length)]?.i??0;
-  const low=Math.max(0,Math.min(tonic,3));
-  const peak=Math.min(ascending.length-1,Math.max(tonic+6,12));
-  const count=(barChords.length-1)*4, out=[];
-  let prev=low;
-  for(let n=0;n<count;n++){
-    const halfway=Math.floor((count-1)/2), rising=n<=halfway;
-    const target=rising?low+(peak-low)*n/halfway:peak-(peak-tonic)*(n-halfway)/(count-halfway);
-    const remaining=rising?halfway-n:count-n;
-    const candidates=ascending.map((_,i)=>i).filter(i=>{
-      const d=Math.abs(i-prev);
-      const chord=barChords[Math.floor(n/4)];
-      const jumpOK=d<=2||(d===3&&chord.pcs.includes(mod(ascending[prev].midi))&&chord.pcs.includes(mod(ascending[i].midi)));
-      const reachable=rising?i+2*remaining>=peak:Math.abs(i-tonic)<=2*remaining;
-      return jumpOK&&reachable;
-    });
-    const ranked=candidates.map(i=>({i,score:Math.abs(i-target)+Math.random()*.8})).sort((a,b)=>a.score-b.score);
-    prev=n===0?low:(ranked[0]?.i??prev);
-    const {string,finger}=ascending[prev];out.push({string,finger});
+  const asc=[...rows].sort((a,b)=>a.midi-b.midi);
+  if(!asc.length)return [];
+  const nb=barChords.length, out=[];
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  const tonics=asc.map((r,i)=>({r,i})).filter(({r})=>r.midi>=60&&r.midi<=74&&mod(r.midi-key.root)===0);
+  const roomy=tonics.filter(({i})=>i+6<=asc.length-1);
+  const T=roomy.length?pick(roomy).i:(tonics.length?tonics[0].i:Math.max(0,asc.findIndex(r=>mod(r.midi-key.root)===0)));
+  const tonicChord=chords(key,true)[0];
+  const peak=Math.min(asc.length-1,T+6+Math.floor(Math.random()*3));
+  const chordOf=b=>b===0?tonicChord:barChords[b];
+  const isTone=(x,b)=>chordOf(b).pcs.includes(mod(asc[x].midi));
+  const patterns=[['n','n','n','n'],['n','n','n','ー'],['n','ー','n','n'],['n','n','n','n'],['n','ー','n','ー']];
+  const pats=Array.from({length:nb-1},(_,b)=>(b===0||b===nb-2)?pick(patterns.slice(0,4)):pick(patterns));
+  const slots=[];pats.forEach((pat,b)=>pat.forEach((x,p)=>{if(x==='n')slots.push(b*4+p)}));
+  const climax=Math.max(1,Math.round(slots.length*0.6)), total=slots.length;
+  const targetAt=k=>k<=climax?T+(peak-T)*(k/climax):peak+(T-peak)*((k-climax)/Math.max(1,total-1-climax));
+  let prev=null, run=0, k=0;
+  for(let b=0;b<nb-1;b++){
+    for(let p=0;p<4;p++){
+      if(pats[b][p]==='ー'){out.push('ー');continue;}
+      const left=total-1-k, isLast=left===0;
+      let idx;
+      if(prev===null){const t=asc.map((_,x)=>x).filter(x=>isTone(x,0)&&x<=T&&x>=T-5);idx=t.length?pick(t):T;}
+      else{
+        const strong=p%2===0, target=isLast?T:targetAt(k);
+        let cands=asc.map((_,x)=>x).filter(x=>{const d=Math.abs(x-prev);if(d>3)return false;if(d===3&&!(isTone(prev,b)&&isTone(x,b)))return false;if(x===prev&&run>=2)return false;return isLast?Math.abs(x-T)===1:Math.abs(x-T)<=1+2*left;});
+        if(strong&&!isLast){const c=cands.filter(x=>isTone(x,b));if(c.length)cands=c;}
+        const cost=x=>{const d=Math.abs(x-prev);return Math.abs(x-target)*0.9+(d===0?1.6:d===1?0:d===2?0.5:1.3)+Math.random()*0.9;};
+        idx=cands.length?cands.sort((a,c)=>cost(a)-cost(c))[0]:prev;
+      }
+      run=idx===prev?run+1:0;prev=idx;k++;
+      const {string,finger}=asc[idx];out.push({string,finger});
+    }
   }
-  const {string,finger}=ascending[tonic];out.push({string,finger},'ー','ー','ー');
+  const {string,finger}=asc[T];out.push({string,finger},'ー','ー','ー');
   return out;
 }
