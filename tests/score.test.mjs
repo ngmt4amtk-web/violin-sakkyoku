@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {renderScore} from '../score.mjs';
+import {KEYS,keyShapes} from '../music.mjs';
 const shapes={A:[2,4,5,7],E:[1,3,5,7],G:[2,4,5,7],D:[2,4,5,7]};
 const note=(string,finger)=>({string,finger});
 let s=renderScore([0,1,2,3].map(x=>note('A',x)),shapes,'A',[],{root:9,type:'major'});
@@ -12,4 +13,5 @@ s=renderScore([null,'休',null,null],shapes,'A',[],{root:0,type:'major'});assert
 assert.match(s,/<path class="rest whole-rest"/);assert.ok(!s.includes('𝄽')&&!s.includes('𝄞'));
 s=renderScore(Array(16).fill(null),shapes,'A',[],{root:0,type:'major'},90,390);assert.equal((s.match(/class="clef"/g)||[]).length,2);
 s=renderScore(Array.from({length:16},(_,i)=>i===7?note('A',2):i===8?note('A',3):null),shapes,'A',[],{root:9,type:'major'},90,390);assert.equal((s.match(/くっつく/g)||[]).length,1);
+for(const id of ['F','Dm']){const key=KEYS.find(k=>k.id===id), shape=keyShapes(key);s=renderScore([note('E',3),note('E',4),null,null],shape,'E',[],key);assert.ok(s.includes('くっつく'));}
 console.log('score tests passed');
