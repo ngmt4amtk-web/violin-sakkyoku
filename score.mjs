@@ -1,5 +1,5 @@
 import {GLYPHS} from './glyphs.mjs';
-import {midi} from './music.mjs';
+import {midi} from './music.mjs?v=3';
 const mod=n=>(n%12+12)%12;
 const colors={G:'#1F5FD1',D:'#EE8A00',A:'#CC1030',E:'#138A3A'};
 const keys={0:[0,''],7:[1,'#'],2:[2,'#'],9:[3,'#'],4:[4,'#'],11:[5,'#'],6:[6,'#'],5:[1,'b'],10:[2,'b'],3:[3,'b'],8:[4,'b'],1:[5,'b']};
@@ -10,7 +10,7 @@ function spell(m,signature,kind){
  for(let i=0;i<7;i++){if(naturals[i]===mod(m))return {i,oct:Math.floor(m/12)-1,a:0};}
  for(let i=0;i<7;i++){let a=kind==='b'?-1:1;if(mod(naturals[i]+a)===mod(m))return {i,oct:Math.floor((m-naturals[i]-a)/12)-1,a};}
 }
-export function renderScore(melody,shapes,string,chordNames,key,tempo=90, width=800){
+export function renderScore(melody,shapes,string,chordNames,key,tempo=90, width=800, title=''){
  const [count,kind]=keys[mod(key.root+(key.type==='major'?0:3))];
  const order=kind==='b'?['B','E','A','D','G']:['F','C','G','D','A','E'];
  const sig=Object.fromEntries(order.slice(0,count).map(l=>[l,kind==='b'?-1:1]));
@@ -19,7 +19,7 @@ export function renderScore(melody,shapes,string,chordNames,key,tempo=90, width=
  const glyph=(name,x,y,cls="")=>add(`<path class="${cls}" d="${GLYPHS[name].d}" transform="translate(${x},${y}) scale(10)"/>`);
  const text=(x,y,t,cls='',extra='')=>add(`<text x="${x}" y="${y}" class="${cls}" ${extra}>${escape(t)}</text>`);
  add(`<svg class="sc-score" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="指番号付きの楽譜"><style>svg.sc-score text{font-family:serif;fill:#242124}svg.sc-score .staff{stroke:#333;stroke-width:1}svg.sc-score .finger{font: bold 20px sans-serif}svg.sc-score .hint{font: 9px sans-serif}svg.sc-score .chord{font: 15px sans-serif;fill:#777}svg.sc-score .notehead{fill:#242124}svg.sc-score .playing .notehead{fill:var(--accent);filter:drop-shadow(0 0 5px var(--accent))}</style>`);
- text(25,25,'弦からつくる、小さな曲','', 'font-size="16"');text(25,48,`♩=${tempo}`,'','font-size="15"');
+ text(25,25,title||'弦からつくる、小さな曲','', 'font-size="16"');text(25,48,`♩=${tempo}`,'','font-size="15"');
  let events=[];
  for(let i=0;i<melody.length;){let c=melody[i];if(c&&typeof c==='object'){let end=i+1;while(end<melody.length&&melody[end]==='ー')end++;for(let p=i;p<end;){let len=Math.min(end-p,4-p%4);events.push({start:p,len,cell:c,continuation:p!==i,owner:i});p+=len}i=end;}else{let end=i+1;while(end<melody.length&&Math.floor(end/4)===Math.floor(i/4)&&(!melody[end]||melody[end]==='休'||melody[end]==='ー'))end++;let p=i;while(p<end){let remain=end-p,len= p%4===0&&remain===4?4:p%2===0&&remain>=2?2:1;events.push({start:p,len,rest:true});p+=len}i=end;}}
  for(let s=0;s<systems;s++){
