@@ -37,6 +37,9 @@ try {
   {
     const {page,context} = await newPage();
     await check(page,'start');
+    const oldLinks = await page.evaluate(() => [...document.querySelectorAll('a[href], [onclick], [data-href]')].map(el => el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('onclick')).filter(h => /(^|\/)v\d+\/?/.test(h) || /前の版/.test(h)));
+    assert.deepEqual(oldLinks, [], `古い版へのリンクが残っている: ${oldLinks}`);
+    assert.ok(!/前の版/.test(await page.locator('body').innerText()), '画面に「前の版」の字が残っている');
     await clickText(page,'はじめる');
     await check(page,'key');
     await clickText(page,'ニ長調');
