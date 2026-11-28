@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 const url = process.argv[2];
 if (!url) throw new Error('使い方: node tests/e2e_v3.mjs http://localhost:8000/');
-const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261128-0836-59f3/work/shots';
+const shots = '/Users/ngmt4a.mtk/.hermes/worker-tasks/claude-tasks/20261128-0853-5ffa/work/shots';
 await fs.mkdir(shots, {recursive:true});
 const browser = await chromium.launch({channel:'chrome', headless:true});
 const errors = [];

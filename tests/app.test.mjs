@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const src=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
 const controls={};
-const ctx={state:{string:'A',shapes:{A:[2,4,5,7],G:[2,4,5,7]},bars:4,view:0,melody:Array(16).fill(null),noteLen:1,ending:0},history:[],audio:{playing:false,ctx:{currentTime:0},unlock:()=>Promise.resolve(),tone(){},releaseAll(){}},midi:()=>69,save(){},render(){},findKeys:()=>[{finger:0}],$:s=>controls[s]??=( {})};
+const ctx={state:{string:'A',shapes:{A:[2,4,5,7],G:[2,4,5,7]},bars:4,view:0,melody:Array(16).fill(null),noteLen:1,ending:0},history:[],audio:{playing:false,ctx:{currentTime:0},unlock:()=>Promise.resolve(),tone(){},releaseAll(){},preview(fn){fn(0)},stopPreview(){}},midi:()=>69,save(){},render(){},findKeys:()=>[{finger:0}],$:s=>controls[s]??=( {})};
 vm.createContext(ctx);
 vm.runInContext(src.slice(src.indexOf('function change('),src.indexOf('const button=')),ctx);
 vm.runInContext(src.slice(src.indexOf('function remember()'),src.indexOf('function go(')),ctx);
