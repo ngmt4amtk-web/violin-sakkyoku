@@ -50,6 +50,22 @@ try {
     await context.close();
   }
   {
+    // 同じ画面で、マスの音の直後に再生を始める（画面を移らないので play() が止める）
+    const {page, context} = await newPage({'violin-sakkyoku-v3':{route:'key', keyId:'D', page:3}});
+    await page.locator('.grid-cell').nth(5).click();
+    await page.locator('.grid-cell').nth(5).click();
+    await wait(300);
+    await page.evaluate(() => { window.__osc.length = 0; document.querySelectorAll('.grid-cell')[9].click(); setTimeout(() => document.querySelector('#play-editor').click(), 30); });
+    await wait(500);
+    {
+      const all = await osc(page), tap = all[0], rest = all.slice(1);
+      if (!tap || !rest.length) failures.push('マスの音の直後に「聴いてみる」: 音が足りない');
+      else if (tap.stop > rest[0].at + 0.1) failures.push(`マスの音の直後に「聴いてみる」: マスの音が再生に ${(tap.stop - rest[0].at).toFixed(2)} 秒重なる`);
+    }
+    await page.locator('#play-editor').click();
+    await context.close();
+  }
+  {
     const {page, context} = await newPage({'violin-sakkyoku-v3':{route:'finger', page:1}});
     await clickText(page, 'この形で');
     await wait(200);
